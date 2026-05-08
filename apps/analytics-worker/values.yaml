@@ -1,0 +1,30 @@
+replicaCount: 2
+
+image:
+  repository: nginx
+  tag: "1.25"
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 8
+  cpuUtilization: 75
+
+service:
+  type: ClusterIP
+  port: 8080
+
+env:
+  - name: WORKER_CONCURRENCY
+    value: "4"
+  - name: LOG_LEVEL
+    value: "info"
