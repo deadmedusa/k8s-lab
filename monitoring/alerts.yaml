@@ -1,0 +1,48 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: k8s-lab-alerts
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: pods
+      rules:
+        - alert: PodCrashLooping
+          expr: rate(kube_pod_container_status_restarts_total[5m]) > 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} крашится"
+            description: "Pod {{ $labels.pod }} в namespace {{ $labels.namespace }} перезапускается"
+
+        - alert: PodNotReady
+          expr: kube_pod_status_ready{condition="true"} == 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} не готов"
+            description: "Pod {{ $labels.pod }} не в статусе Ready уже 2 минуты"
+
+    - name: resources
+      rules:
+        - alert: HighCPUUsage
+          expr: rate(container_cpu_usage_seconds_total[5m]) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Высокий CPU на {{ $labels.pod }}"
+            description: "Pod {{ $labels.pod }} использует больше 80% CPU"
+
+        - alert: HighMemoryUsage
+          expr: container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.9
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Высокое потребление памяти {{ $labels.pod }}"
+            description: "Pod {{ $labels.pod }} использует больше 90% памяти"
